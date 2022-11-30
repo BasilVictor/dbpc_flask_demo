@@ -1,0 +1,100 @@
+{% extends "base_template.html" %}
+
+{% block title %}Main Page{% endblock %}
+
+{% block main %}
+
+<div class="container">
+    <div class="row">
+        <div class="column">
+            <select class="form-select mb-3" id="color_list" aria-label="Color List" onchange="color_change()">
+                <option disabled selected value>Select</option>
+                {% for color in color_list %}
+                    <option value="{{color}}">Color - {{color}}</option>
+                {% endfor %}
+            </select>
+
+            <div class="form-group mb-2">
+                <label>Name</label>
+                <input class="form-control" type="text" name="name" id="name">
+            </div>
+            <div class="form-group mb-2">
+                <label>Color</label>
+                <input class="form-control" type="text" name="color" id="color" readonly>
+            </div>
+            <div class="form-group mb-2">
+                <label>Color Description</label>
+                <input class="form-control" type="text" name="description" id="description" readonly>
+            </div>
+            <button class="btn btn-primary" id="submit" onclick="submit_data()">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" id="button_wait" hidden></span>
+                Submit
+            </button>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+function color_change() {
+    var select = document.getElementById("color_list");
+    var value = select.value;
+    var text = select.options[select.selectedIndex].text;
+    console.log("value: " + value + "\ntext: " + text);
+    document.getElementById("color").value = value;
+
+    var data = {
+        query: value
+    }
+
+    document.getElementById("submit").disabled = true;
+    document.getElementById("button_wait").hidden = false;
+
+    fetch(`${window.origin}/api/get_description/${value}`, {
+        method: "GET",
+        credentials: "include",
+        cache: 'no-cache',
+        headers: new Headers({
+            "content-type": "application/json"
+        })
+    })
+    .then(response => {
+        response.json().then(data => {
+            document.getElementById("description").value = data.data;
+            document.getElementById("submit").disabled = false;
+            document.getElementById("button_wait").hidden = true;
+        })
+    })
+}
+
+function submit_data() {
+
+    var data = {
+        name: document.getElementById("name").value,
+        color: document.getElementById("color").value
+    }
+
+    fetch(`${window.origin}/api/submit_data`, {
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify(data),
+        cache: 'no-cache',
+        headers: new Headers({
+            "content-type": "application/json"
+        })
+    })
+    .then(response => {
+        if(response.status != 200) {
+            console.log("Error");
+            return;
+        }
+        response.json().then(data => {
+            console.log(data);
+        })
+    })
+}
+</script>
+{% endblock %}
